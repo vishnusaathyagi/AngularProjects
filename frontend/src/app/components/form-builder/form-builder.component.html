@@ -1,0 +1,88 @@
+<div class="builder-container" style="max-width: 700px; margin: 30px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
+  <h2>Create New Dynamic Form Schema</h2>
+  <p style="color: #666; font-size: 14px;">Build dynamic form layouts visually and store them in MySQL.</p>
+  <hr style="margin-bottom: 20px;">
+
+  <form [formGroup]="builderForm" (ngSubmit)="onSaveForm()">
+    
+    <!-- Meta Details Section -->
+    <div style="margin-bottom: 15px;">
+      <label style="font-weight: bold; display: block; margin-bottom: 5px;">Form Title *</label>
+      <input type="text" formControlName="form_name" placeholder="e.g. Employee Onboarding Form" style="width: 100%; padding: 8px; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="font-weight: bold; display: block; margin-bottom: 5px;">Description</label>
+      <input type="text" formControlName="description" placeholder="Short description of this layout" style="width: 100%; padding: 8px; box-sizing: border-box;">
+    </div>
+
+    <h3>Form Fields</h3>
+    
+    <!-- Dynamic Field Array Container -->
+    <div formArrayName="fields">
+      <div *ngFor="let field of fields.controls; let i = index" [formGroupName]="i" 
+           style="background: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 15px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <strong style="color: #007bff;">Field #{{ i + 1 }}</strong>
+          <button type="button" (click)="removeField(i)" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" *ngIf="fields.length > 1">
+            Remove Field
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 12px; font-weight: bold;">Field Name (Key) *</label>
+            <input type="text" formControlName="name" placeholder="e.g. phoneNumber" style="width: 100%; padding: 6px; box-sizing: border-box;">
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: bold;">Field Label *</label>
+            <input type="text" formControlName="label" placeholder="e.g. Phone Number" style="width: 100%; padding: 6px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 12px; font-weight: bold;">Input Type *</label>
+            <select formControlName="type" style="width: 100%; padding: 6px; box-sizing: border-box;">
+              <option value="text">Text</option>
+              <option value="email">Email</option>
+              <option value="number">Number</option>
+              <option value="select">Dropdown Select</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: bold;">Placeholder</label>
+            <input type="text" formControlName="placeholder" placeholder="e.g. Enter details..." style="width: 100%; padding: 6px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <!-- Conditional options input for select types -->
+        <div *ngIf="field.get('type')?.value === 'select'" style="margin-bottom: 10px;">
+          <label style="font-size: 12px; font-weight: bold;">Dropdown Options (Comma Separated)</label>
+          <input type="text" formControlName="optionsInput" placeholder="Option 1, Option 2, Option 3" style="width: 100%; padding: 6px; box-sizing: border-box;">
+        </div>
+
+        <div>
+          <label style="font-size: 13px; cursor: pointer;">
+            <input type="checkbox" formControlName="required"> Is this field required?
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <button type="button" (click)="addField()" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 20px;">
+      + Add Another Field
+    </button>
+
+    <div *ngIf="message" style="color: red; margin-bottom: 10px;">{{ message }}</div>
+
+    <div>
+      <button type="submit" [disabled]="isSubmitting" style="background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px;">
+        {{ isSubmitting ? 'Saving Configuration...' : 'Save Form to Database' }}
+      </button>
+    </div>
+
+  </form>
+</div>

@@ -21,4 +21,25 @@ export class FormApiService {
     return this.http.get(`${this.baseUrl}/${safeName}`);
   }
 
+  /**
+   * Saves a newly created dynamic form layout schema to the MySQL database.
+   */
+  saveFormStructure(formData: any): Observable<any> {
+    return this.http.post(this.baseUrl, formData);
+  }
+
+  // Inside FormApiService class:
+
+  /**
+   * Sends user entry data to be stored in form_submissions table
+   */
+  submitFormResponse(formId: number, submissionData: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/submit`, {
+      form_id: formId,
+      submission_data: submissionData
+    });
+  }
+
+
+
 }
