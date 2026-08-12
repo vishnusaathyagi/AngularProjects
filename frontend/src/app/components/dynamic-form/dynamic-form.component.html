@@ -1,1 +1,51 @@
-<p>dynamic-form works!</p>
+<div class="form-container" style="max-width: 500px; margin: 30px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; font-family: sans-serif;">
+  
+  <div *ngIf="isLoading" class="loading-state">
+    <p>Loading application interface profiles from database...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-state" style="color: red;">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <h2>{{ formTitle }}</h2>
+    <p style="color: #666; font-size: 14px;">{{ formDescription }}</p>
+    <hr style="margin-bottom: 20px;">
+
+    <form [formGroup]="dynamicForm" (ngSubmit)="onSubmit()">
+      
+      <div *ngFor="let field of formFields" class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column;">
+        <label [for]="field.name" style="font-weight: bold; margin-bottom: 5px;">
+          {{ field.label }} <span *ngIf="field.required" style="color: red;">*</span>
+        </label>
+
+        <input *ngIf="field.type !== 'select' && field.type !== 'textarea'"
+               [type]="field.type"
+               [id]="field.name"
+               [formControlName]="field.name"
+               [placeholder]="field.placeholder || ''"
+               style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+
+        <select *ngIf="field.type === 'select'"
+                [id]="field.name"
+                [formControlName]="field.name"
+                style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="" disabled selected>Select an option...</option>
+          <option *ngFor="let option of field.options" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+
+        <small *ngIf="dynamicForm.get(field.name)?.touched && dynamicForm.get(field.name)?.invalid" style="color: red; margin-top: 5px; font-size: 12px;">
+          Please provide a valid entry for {{ field.label }}.
+        </small>
+      </div>
+
+      <button type="submit" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
+        Submit Form
+      </button>
+    </form>
+  </div>
+
+</div>

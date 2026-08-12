@@ -55,6 +55,40 @@ const createFormLayout = async (req, res) => {
   }
 };
 
+/**
+ * Controller to handle fetching a dynamic form layout config by name.
+ * GET /api/forms/:formName
+ */
+const getFormLayout = async (req, res) => {
+  try {
+    const { formName } = req.params;
+
+    const query = `SELECT * FROM forms WHERE form_name = ? LIMIT 1`;
+    const [rows] = await dbPool.query(query, [formName]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form layout configuration not found.'
+      });
+    }
+
+    // Return the form configuration block safely
+    return res.status(200).json({
+      success: true,
+      data: rows[0]
+    });
+
+  } catch (error) {
+    console.error('[Controller Error - getFormLayout]:', error.message);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal Server Error. Failed to fetch form layout.' 
+    });
+  }
+};
+
 module.exports = {
-  createFormLayout
+  createFormLayout,
+  getFormLayout
 };
