@@ -7,24 +7,33 @@ const cors = require('cors');
 const dbPool = require('./src/config/db');
 
 // Initializes a new Express application instance.
-// This 'app' object acts as the main engine for your backend—allowing you to 
-// define routes (API endpoints), attach middlewares, and listen for incoming HTTP requests.
 const app = express();
 
-// The global port configuration. 
-// 'process' is a built-in global object provided by Node.js containing system details.
-// This line checks 'process.env' for a port from your environment file, defaulting to 5000 if empty.
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
-// Enables Cross-Origin Resource Sharing (CORS) as a global middleware.
-// By default, browsers block frontend apps (like your Angular dev server on port 4200) 
-// from making requests to a different backend port (like port 5000). 
-// This code sends headers telling the browser: "Allow requests from outside domains."
-app.use(cors());
+// CORS Security Configuration
+const allowedOrigins = [
+  'https://angularprojects-fna4.onrender.com', // Live Angular Frontend on Render
+  'http://localhost:4200'                      // Local Angular Dev Server
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like Postman or server-to-server calls) or matching allowed list
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy blocked access from this origin.'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 // Built-in Express middleware that parses incoming requests with JSON payloads.
-// Crucial for capturing and extracting the dynamic form data sent over by your Angular frontend.
 app.use(express.json());
 
 // Import and mount the form management routes
