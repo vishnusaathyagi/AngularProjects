@@ -36,10 +36,11 @@ The application provides a visual UI where users can build form layouts, attach 
 ## 🛠 Tech Stack
 
 ### Frontend
-* **Angular** (v17+) - Single Page Application architecture built with standalone components.
+* **Angular** (v19) - Single Page Application architecture built with standalone components.
 * **Angular Reactive Forms & FormBuilder** - Dynamic form control generation and state management.
 * **Bootstrap / CSS** - Responsive styling and UI controls.
-* **ExcelJS** - In-browser generation and download of Excel spreadsheets for form submissions.
+* **ExcelJS** (v4.4.0) - In-browser generation and download of Excel spreadsheets for form submissions.
+* **TypeScript** (v5.7.2) & **RxJS** (v7.8.0) - Reactive data handling and strict typing.
 
 ### Backend
 * **Node.js & Express.js** - Lightweight REST API server handling request processing and database routing.
