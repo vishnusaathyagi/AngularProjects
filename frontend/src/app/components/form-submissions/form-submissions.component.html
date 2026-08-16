@@ -1,0 +1,90 @@
+<!-- Developer note: Submissions viewer shows stored user responses for a selected form. -->
+<!-- Layers:
+  - Header: page title and back action
+  - Toolbar: form picker and export control
+  - Search: live filter for responses
+  - Loading/Error: status messages
+  - Data grid: tabular response display
+  These comments are informational only and do not affect behavior. -->
+<div class="viewer-container" style="max-width: 950px; margin: 30px auto; font-family: sans-serif;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>Form Responses Dashboard</h2>
+    <button (click)="goBack()" style="background: #6c757d; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer;">
+      ← Back to Form Home
+    </button>
+  </div>
+
+  <!-- Toolbar: choose form view and export actions -->
+  <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <label style="font-weight: bold; margin-right: 10px;">Select Form View:</label>
+      <select [value]="selectedFormId" (change)="onFormChange($event)" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc;">
+        <option *ngFor="let form of availableForms" [value]="form.id">
+          {{ form.form_name }} ({{ form.submission_count || 0 }} total entries)
+        </option>
+      </select>
+    </div>
+
+    <!-- Export to Excel Button -->
+    <button 
+      *ngIf="filteredSubmissions.length > 0" 
+      (click)="exportToExcel()" 
+      style="background: #28a745; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;"
+    >
+      📥 Export Excel
+    </button>
+  </div>
+
+  <!-- Search bar: live filtering of loaded submissions -->
+  <div *ngIf="allSubmissions.length > 0" style="margin-bottom: 20px;">
+    <input 
+      type="text" 
+      [(ngModel)]="searchTerm" 
+      (input)="filterSubmissions()" 
+      placeholder="🔍 Search entries by text, value, or submission date..." 
+      style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box;"
+    />
+  </div>
+
+  <!-- Loading / Error States: shows fetch progress or errors -->
+  <div *ngIf="isLoading"><p>Fetching submissions from MySQL...</p></div>
+  <div *ngIf="errorMessage" style="color: red;">{{ errorMessage }}</div>
+
+  <!-- Data Grid Table: renders submissions when available -->
+  <div *ngIf="!isLoading && !errorMessage">
+    
+    <div *ngIf="allSubmissions.length === 0" style="padding: 20px; background: #fff3cd; color: #856404; border-radius: 4px;">
+      No user entries submitted yet for this form.
+    </div>
+
+    <div *ngIf="allSubmissions.length > 0 && filteredSubmissions.length === 0" style="padding: 15px; background: #e2e3e5; color: #383d41; border-radius: 4px;">
+      No submissions match your search query "{{ searchTerm }}".
+    </div>
+
+    <table *ngIf="filteredSubmissions.length > 0" style="width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <thead>
+        <tr style="background: #007bff; color: white; text-align: left;">
+          <th style="padding: 10px; border: 1px solid #dee2e6;">Submission #</th>
+          <th *ngFor="let key of tableHeaders" style="padding: 10px; border: 1px solid #dee2e6; text-transform: capitalize;">
+            {{ key }}
+          </th>
+          <th style="padding: 10px; border: 1px solid #dee2e6;">Submitted At</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of filteredSubmissions; let i = index" [style.background]="i % 2 === 0 ? '#ffffff' : '#f8f9fa'">
+          <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">#{{ row.id }}</td>
+          <td *ngFor="let key of tableHeaders" style="padding: 10px; border: 1px solid #dee2e6;">
+            {{ row.submission_data[key] || '-' }}
+          </td>
+          <td style="padding: 10px; border: 1px solid #dee2e6; font-size: 12px; color: #666;">
+            {{ row.submitted_at | date:'medium' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>

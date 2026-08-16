@@ -1,8 +1,12 @@
-import { Component } from '@angular/core';
+/* Developer note: Form Builder component.
+  Purpose: visually compose form layouts and validation rules, then save to backend.
+  Layers: reactive builder form setup, dynamic FormArray of fields, persistence calls.
+  Inline comments inside the file explain many helper methods; this header helps new readers. */
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormApiService } from '../../services/form-api.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-form-builder',
@@ -11,61 +15,109 @@ import { Router } from '@angular/router';
   templateUrl: './form-builder.component.html',
   styleUrls: ['./form-builder.component.css']
 })
-export class FormBuilderComponent {
-  builderForm: FormGroup;
+export class FormBuilderComponent implements OnInit {
+  // Main reactive form containing form metadata and array of field rules
+  builderForm!: FormGroup;
   isSubmitting: boolean = false;
   message: string = '';
+  editingFormId: number | null = null; // Tracks form ID when editing an existing layout
 
   constructor(
     private fb: FormBuilder, 
     private formApiService: FormApiService,
-    private router: Router
-  ) {
-    // Initialize root builder form structure
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  // Initializes the screen structure and checks if we are editing an existing form
+  ngOnInit(): void {
     this.builderForm = this.fb.group({
       form_name: ['', Validators.required],
       description: [''],
       created_by: [1],
-      fields: this.fb.array([]) // Array to hold dynamic field definitions
+      fields: this.fb.array([])
     });
 
-    // Add at least one default field entry on start
-    this.addField();
+    // Read URL query parameters to determine if we are editing an existing form
+    this.route.queryParams.subscribe(params => {
+      if (params['editId'] && params['formName']) {
+        this.editingFormId = Number(params['editId']);
+        this.loadFormForEditing(params['formName']);
+      } else {
+        // Start with one blank input field for new forms
+        this.addField();
+      }
+    });
   }
 
-  // Getter for easy access to fields FormArray
+  // Easy getter to access the dynamic fields array in the reactive form
   get fields(): FormArray {
     return this.builderForm.get('fields') as FormArray;
   }
 
-  /**
-   * Pushes a new field configuration group into the array
-   */
-  addField(): void {
-    const fieldGroup = this.fb.group({
-      name: ['', Validators.required],
-      label: ['', Validators.required],
-      type: ['text', Validators.required],
-      placeholder: [''],
-      required: [false],
-      optionsInput: [''] // Temporary raw string input for select dropdown choices (comma separated)
-    });
+  // Creates a field configuration group with validation rules (Min/Max length, Min/Max value, Regex)
+  createFieldGroup(data: any = {}): FormGroup {
+    let optionsString = '';
+    if (data.options && Array.isArray(data.options)) {
+      optionsString = data.options.join(', ');
+    }
 
-    this.fields.push(fieldGroup);
+    return this.fb.group({
+      name: [data.name || '', Validators.required],
+      label: [data.label || '', Validators.required],
+      type: [data.type || 'text', Validators.required],
+      placeholder: [data.placeholder || ''],
+      required: [data.required || false],
+      optionsInput: [optionsString],
+      // Phase 1 Advanced Validation Properties
+      minLength: [data.minLength ?? null],
+      maxLength: [data.maxLength ?? null],
+      min: [data.min ?? null],
+      max: [data.max ?? null],
+      pattern: [data.pattern || '']
+    });
   }
 
-  /**
-   * Removes a field from the builder list
-   */
+  // Adds a new field card to the form design builder
+  addField(): void {
+    this.fields.push(this.createFieldGroup());
+  }
+
+  // Removes a field card from the form designer (keeps at least one field)
   removeField(index: number): void {
     if (this.fields.length > 1) {
       this.fields.removeAt(index);
     }
   }
 
-  /**
-   * Submits the crafted form configuration to the backend API
-   */
+  // Fetches existing form configuration from MySQL when in edit mode
+  loadFormForEditing(formName: string): void {
+    this.formApiService.getFormStructure(formName).subscribe({
+      next: (res: any) => {
+        if (res.success && res.data) {
+          const parsedFields = typeof res.data.fields === 'string' 
+            ? JSON.parse(res.data.fields) 
+            : res.data.fields;
+
+          this.builderForm.patchValue({
+            form_name: res.data.form_name,
+            description: res.data.description,
+            created_by: res.data.created_by || 1
+          });
+
+          this.fields.clear();
+          parsedFields.forEach((f: any) => {
+            this.fields.push(this.createFieldGroup(f));
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load schema for editing:', err);
+      }
+    });
+  }
+
+  // Validates the designer form and sends structure to Node backend
   onSaveForm(): void {
     if (this.builderForm.invalid) {
       this.builderForm.markAllAsTouched();
@@ -75,7 +127,7 @@ export class FormBuilderComponent {
     this.isSubmitting = true;
     const rawValue = this.builderForm.value;
 
-    // Transform raw form array data into clean API payload schema
+    // Clean up fields payload and assign optional validation properties
     const formattedFields = rawValue.fields.map((f: any) => {
       const fieldConfig: any = {
         name: f.name,
@@ -85,9 +137,21 @@ export class FormBuilderComponent {
         required: f.required
       };
 
-      // If field type is 'select', parse comma-separated options string into an array
       if (f.type === 'select' && f.optionsInput) {
         fieldConfig.options = f.optionsInput.split(',').map((opt: string) => opt.trim());
+      }
+
+      // Include text validation rules if defined
+      if (f.type === 'text' || f.type === 'email' || f.type === 'tel') {
+        if (f.minLength !== null && f.minLength !== '') fieldConfig.minLength = Number(f.minLength);
+        if (f.maxLength !== null && f.maxLength !== '') fieldConfig.maxLength = Number(f.maxLength);
+        if (f.pattern) fieldConfig.pattern = f.pattern;
+      }
+
+      // Include number validation rules if defined
+      if (f.type === 'number') {
+        if (f.min !== null && f.min !== '') fieldConfig.min = Number(f.min);
+        if (f.max !== null && f.max !== '') fieldConfig.max = Number(f.max);
       }
 
       return fieldConfig;
@@ -100,18 +164,39 @@ export class FormBuilderComponent {
       fields: formattedFields
     };
 
-    this.formApiService.saveFormStructure(payload).subscribe({
-      next: (res:any) => {
-        this.isSubmitting = false;
-        alert('Form configuration saved successfully to MySQL!');
-        // Navigate back to view the form live
-        this.router.navigate(['/']);
-      },
-      error: (err:any) => {
-        console.error(err);
-        this.message = err.error?.message || 'Error saving form configuration.';
-        this.isSubmitting = false;
-      }
-    });
+    if (this.editingFormId) {
+      // Update existing record in MySQL
+      this.formApiService.updateFormLayout(this.editingFormId, payload).subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          alert('Form design updated successfully!');
+          this.router.navigate(['/']);
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.message = err.error?.message || 'Error updating form configuration.';
+          this.isSubmitting = false;
+        }
+      });
+    } else {
+      // Create new record in MySQL
+      this.formApiService.saveFormStructure(payload).subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          alert('Form design saved successfully!');
+          this.router.navigate(['/']);
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.message = err.error?.message || 'Error saving form configuration.';
+          this.isSubmitting = false;
+        }
+      });
+    }
+  }
+
+  // Returns back to home screen
+  goBack(): void {
+    this.router.navigate(['/']);
   }
 }

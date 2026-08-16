@@ -1,72 +1,113 @@
-<div class="dashboard-wrapper" style="max-width: 600px; margin: 30px auto; font-family: sans-serif;">
+<!-- Developer note: This template renders a dynamic form selected from the DB. -->
+<!-- Layers:
+  - Header toolbar: select form and top-level actions
+  - Loading/Error: shows current load status and errors
+  - Rendered Dynamic Form UI: the actual form and fields loop
+  - Submit: submit button
+  These comments are for developer clarity and do not affect runtime. -->
+<div class="header-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
   
-  <!-- Top Navigation & Selector Toolbar -->
-  <div class="toolbar" style="display: flex; justify-content: space-between; align-items: center; background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-    <div>
-      <label style="font-weight: bold; margin-right: 8px;">Select Form:</label>
-      <select [value]="selectedFormName" (change)="onFormSelectChange($event)" style="padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc;">
-        <option *ngFor="let form of availableForms" [value]="form.form_name">
-          {{ form.form_name }}
-        </option>
-      </select>
-    </div>
+  <!-- Form Selector Dropdown displaying live response counts -->
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <label style="font-weight: bold;">Select Form:</label>
+    <select [value]="selectedFormName" (change)="onFormSelectChange($event)" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc;">
+      <option *ngFor="let form of availableForms" [value]="form.form_name">
+        {{ form.form_name }} ({{ form.submission_count || 0 }} submissions)
+      </option>
+    </select>
+  </div>
 
+  <!-- Main Action Buttons -->
+  <div style="display: flex; gap: 8px; align-items: center;">
     <button (click)="navigateToBuilder()" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
       + Build New Form
     </button>
-  </div>
 
-  <!-- Form Rendering Card -->
-  <div class="form-container" style="padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+    <button (click)="navigateToSubmissions()" style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+      View Submissions
+    </button>
+
+    <button (click)="editCurrentForm()" style="background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+      ✏️ Edit Form
+    </button>
     
-    <div *ngIf="isLoading" class="loading-state">
-      <p>Loading form layout from database...</p>
-    </div>
-
-    <div *ngIf="errorMessage" class="error-state" style="color: red;">
-      {{ errorMessage }}
-    </div>
-
-    <div *ngIf="!isLoading && !errorMessage">
-      <h2>{{ formTitle }}</h2>
-      <p style="color: #666; font-size: 14px;">{{ formDescription }}</p>
-      <hr style="margin-bottom: 20px;">
-
-      <form [formGroup]="dynamicForm" (ngSubmit)="onSubmit()">
-        
-        <div *ngFor="let field of formFields" class="form-group" style="margin-bottom: 15px; display: flex; flex-direction: column;">
-          <label [for]="field.name" style="font-weight: bold; margin-bottom: 5px;">
-            {{ field.label }} <span *ngIf="field.required" style="color: red;">*</span>
-          </label>
-
-          <input *ngIf="field.type !== 'select' && field.type !== 'textarea'"
-                 [type]="field.type"
-                 [id]="field.name"
-                 [formControlName]="field.name"
-                 [placeholder]="field.placeholder || ''"
-                 style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-
-          <select *ngIf="field.type === 'select'"
-                  [id]="field.name"
-                  [formControlName]="field.name"
-                  style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-            <option value="" disabled selected>Select an option...</option>
-            <option *ngFor="let option of field.options" [value]="option">
-              {{ option }}
-            </option>
-          </select>
-
-          <small *ngIf="dynamicForm.get(field.name)?.touched && dynamicForm.get(field.name)?.invalid" style="color: red; margin-top: 5px; font-size: 12px;">
-            Please provide a valid entry for {{ field.label }}.
-          </small>
-        </div>
-
-        <button type="submit" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px;">
-          Submit Form
-        </button>
-      </form>
-    </div>
-
+    <button (click)="deleteCurrentForm()" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+      🗑️ Delete Form
+    </button>
   </div>
 
+</div>
+
+  <!-- Header toolbar: form selector and quick actions -->
+
+  <!-- Loading & Error States -->
+<div *ngIf="isLoading"><p>Loading form design...</p></div>
+<div *ngIf="errorMessage" style="color: red; font-weight: bold;">{{ errorMessage }}</div>
+
+  <!-- Rendered Dynamic Form UI: main form area shown when loaded -->
+<div *ngIf="!isLoading && !errorMessage" style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 25px; border-radius: 8px; background: #fff;">
+  <h2>{{ formTitle }}</h2>
+  <p style="color: #666;">{{ formDescription }}</p>
+  <hr style="margin-bottom: 20px;">
+
+  <form [formGroup]="dynamicForm" (ngSubmit)="onSubmit()">
+    <!-- Fields loop: each entry here maps to a field definition from DB -->
+    
+    <div *ngFor="let field of formFields" style="margin-bottom: 15px;">
+      <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+        {{ field.label }} <span *ngIf="field.required" style="color: red;">*</span>
+      </label>
+
+      <!-- Standard Text, Email, Tel & Number Inputs -->
+      <input 
+        *ngIf="field.type !== 'select'" 
+        [type]="field.type" 
+        [formControlName]="field.name" 
+        [placeholder]="field.placeholder || ''"
+        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;"
+      />
+
+      <!-- Dropdown Select Input -->
+      <select 
+        *ngIf="field.type === 'select'" 
+        [formControlName]="field.name"
+        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;"
+      >
+        <option value="">-- Select Option --</option>
+        <option *ngFor="let opt of field.options" [value]="opt">{{ opt }}</option>
+      </select>
+
+      <!-- Advanced Dynamic Field Validation Error Messages: per-field validation hints for developers -->
+      <div *ngIf="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched" style="color: red; font-size: 12px; margin-top: 4px;">
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['required']">
+          {{ field.label }} is required.
+        </div>
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['email']">
+          Please enter a valid email address.
+        </div>
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['minlength']">
+          Must be at least {{ field.minLength }} characters.
+        </div>
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['maxlength']">
+          Must not exceed {{ field.maxLength }} characters.
+        </div>
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['min']">
+          Minimum allowed value is {{ field.min }}.
+        </div>
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['max']">
+          Maximum allowed value is {{ field.max }}.
+        </div>
+        <div *ngIf="dynamicForm.get(field.name)?.errors?.['pattern']">
+          Invalid format entered for {{ field.label }}.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Submit button: triggers `onSubmit()` in component -->
+    <button type="submit" style="width: 100%; background: #007bff; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 15px;">
+      Submit Form
+    </button>
+
+  </form>
 </div>
