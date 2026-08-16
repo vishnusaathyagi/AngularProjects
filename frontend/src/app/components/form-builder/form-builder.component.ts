@@ -119,15 +119,18 @@ export class FormBuilderComponent implements OnInit {
 
   // Validates the designer form and sends structure to Node backend
   onSaveForm(): void {
+    // Check if form is invalid
     if (this.builderForm.invalid) {
       this.builderForm.markAllAsTouched();
+      this.message = 'Please fill in all required fields (Form Title, Field Name, and Field Label) before saving.';
       return;
     }
 
     this.isSubmitting = true;
+    this.message = '';
     const rawValue = this.builderForm.value;
 
-    // Clean up fields payload and assign optional validation properties
+    // Clean payload and assign validation properties
     const formattedFields = rawValue.fields.map((f: any) => {
       const fieldConfig: any = {
         name: f.name,
@@ -141,14 +144,12 @@ export class FormBuilderComponent implements OnInit {
         fieldConfig.options = f.optionsInput.split(',').map((opt: string) => opt.trim());
       }
 
-      // Include text validation rules if defined
-      if (f.type === 'text' || f.type === 'email' || f.type === 'tel') {
+      if (['text', 'email', 'tel'].includes(f.type)) {
         if (f.minLength !== null && f.minLength !== '') fieldConfig.minLength = Number(f.minLength);
         if (f.maxLength !== null && f.maxLength !== '') fieldConfig.maxLength = Number(f.maxLength);
         if (f.pattern) fieldConfig.pattern = f.pattern;
       }
 
-      // Include number validation rules if defined
       if (f.type === 'number') {
         if (f.min !== null && f.min !== '') fieldConfig.min = Number(f.min);
         if (f.max !== null && f.max !== '') fieldConfig.max = Number(f.max);
@@ -165,7 +166,6 @@ export class FormBuilderComponent implements OnInit {
     };
 
     if (this.editingFormId) {
-      // Update existing record in MySQL
       this.formApiService.updateFormLayout(this.editingFormId, payload).subscribe({
         next: () => {
           this.isSubmitting = false;
@@ -179,7 +179,6 @@ export class FormBuilderComponent implements OnInit {
         }
       });
     } else {
-      // Create new record in MySQL
       this.formApiService.saveFormStructure(payload).subscribe({
         next: () => {
           this.isSubmitting = false;
