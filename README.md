@@ -13,6 +13,18 @@ You can instantly test the live application without setting up an account:
 
 ---
 
+## 📸 Screenshots & UI Preview
+
+| Create Form Schema | Edit Form Schema |
+| :---: | :---: |
+| ![Create Form Schema](./images/form_schema.png) | ![Edit Form Schema](./images/edit_form_schema.png) |
+
+| Created Form Details / Submission View | Submissions Dashboard |
+| :---: | :---: |
+| ![Created Form Details](./images/created_form_dtail.png) | ![View Form Data](./images/view_form_data.png) |
+
+---
+
 ## 📖 About The Project
 
 I built this application to solve a real-world problem: creating complex, customizable forms dynamically without needing to write new frontend UI components or manually update backend SQL database schemas every time a new field is needed. 
@@ -68,6 +80,11 @@ The application provides a visual UI where users can build form layouts, attach 
 │   │   └── controllers/  # Core business logic & database queries
 │   ├── index.js          # Server entry point
 │   └── .env.example      # Environment variable template
+├── images/               # Application screenshots for documentation
+│   ├── form_schema.png
+│   ├── edit_form_schema.png
+│   ├── created_form_dtail.png
+│   └── view_form_data.png
 └── README.md
 ```
 
