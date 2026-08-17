@@ -1,8 +1,10 @@
+<!-- Form Builder Main Container -->
 <div class="form-builder-container" style="max-width: 800px; margin: 30px auto; background: #ffffff; padding: 25px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-family: Arial, sans-serif;">
   
-  <!-- Header with Back Button -->
+  <!-- Header Section with Screen Title and Navigation Back Button -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
     <h2 style="margin: 0; font-size: 24px; color: #111;">Create New Dynamic Form Schema</h2>
+    <!-- Triggers goBack() navigation method in component -->
     <button type="button" (click)="goBack()" style="background: #6c757d; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 14px;">
       &larr; Back
     </button>
@@ -14,41 +16,46 @@
   
   <hr style="border: none; border-top: 1px solid #ccc; margin-bottom: 20px;">
 
-  <!-- Main Reactive Form -->
+  <!-- Main Reactive Form Binding -->
   <form [formGroup]="builderForm" (ngSubmit)="onSaveForm()">
     
-    <!-- Form Title -->
+    <!-- Form Metadata Section: Form Title Input -->
     <div style="margin-bottom: 15px;">
       <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #222;">Form Title *</label>
       <input type="text" formControlName="form_name" placeholder="e.g. Job Application Form" 
              [style.border-color]="builderForm.get('form_name')?.invalid && builderForm.get('form_name')?.touched ? '#dc3545' : '#ccc'"
              style="width: 100%; padding: 8px; box-sizing: border-box; border-style: solid; border-width: 1px; border-radius: 4px; font-size: 14px;">
+      <!-- Validation Message for Form Title -->
       <div *ngIf="builderForm.get('form_name')?.invalid && builderForm.get('form_name')?.touched" style="color: #dc3545; font-size: 12px; margin-top: 4px;">
         Form title is required.
       </div>
     </div>
 
-    <!-- Description -->
+    <!-- Form Metadata Section: Description Input -->
     <div style="margin-bottom: 20px;">
       <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #222;">Description</label>
       <input type="text" formControlName="description" placeholder="Short description of this layout" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
     </div>
 
-    <!-- Fields Section Header -->
+    <!-- Section Header for Dynamic Fields -->
     <h3 style="font-size: 18px; margin-bottom: 15px; color: #111;">Form Fields & Validation Rules</h3>
     
-    <!-- Dynamic Fields Array -->
+    <!-- Dynamic Fields Array Container -->
     <div formArrayName="fields">
+      <!-- Iterate through each field FormGroup in the FormArray -->
       <div *ngFor="let field of fields.controls; let i = index" [formGroupName]="i" 
            style="background: #f8f9fa; padding: 15px; border: 1px solid #e9ecef; border-radius: 6px; margin-bottom: 15px;">
         
+        <!-- Field Card Header & Remove Button -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
           <strong style="color: #007bff; font-size: 15px;">Field #{{ i + 1 }}</strong>
+          <!-- Hide remove button if only one field remains -->
           <button type="button" (click)="removeField(i)" style="background: #dc3545; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;" *ngIf="fields.length > 1">
             Remove Field
           </button>
         </div>
 
+        <!-- Grid Row 1: Field Name (Key) and Field Label -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
           <div>
             <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Field Name (Key) *</label>
@@ -70,11 +77,13 @@
           </div>
         </div>
 
+        <!-- Grid Row 2: Input Type Dropdown (Including Password) & Placeholder -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
           <div>
             <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Input Type *</label>
             <select formControlName="type" style="width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background-color: #fff;">
               <option value="text">Text</option>
+              <option value="password">Password</option> <!-- Password Input Type Option -->
               <option value="email">Email</option>
               <option value="number">Number</option>
               <option value="tel">Phone / Tel</option>
@@ -87,15 +96,15 @@
           </div>
         </div>
 
-        <!-- Dropdown Options Input -->
+        <!-- Dynamic Dropdown Options Input: Rendered only when type is 'select' -->
         <div *ngIf="field.get('type')?.value === 'select'" style="margin-bottom: 10px;">
           <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Dropdown Options (Comma Separated)</label>
           <input type="text" formControlName="optionsInput" placeholder="Option 1, Option 2, Option 3" style="width: 100%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
         </div>
 
-        <!-- Advanced Validation Section: text/email/tel -->
-        <div *ngIf="['text', 'email', 'tel'].includes(field.get('type')?.value)" style="background: #eef5ff; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #d0e2ff;">
-          <strong style="font-size: 12px; color: #0056b3; display: block; margin-bottom: 6px;">Text Validation Rules:</strong>
+        <!-- Advanced Text/Password Validation Rules Block (MinLength, MaxLength, Regex Pattern) -->
+        <div *ngIf="['text', 'password', 'email', 'tel'].includes(field.get('type')?.value)" style="background: #eef5ff; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #d0e2ff;">
+          <strong style="font-size: 12px; color: #0056b3; display: block; margin-bottom: 6px;">Text & Password Validation Rules:</strong>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
             <div>
               <label style="font-size: 11px; display: block; margin-bottom: 2px;">Min Length</label>
@@ -112,7 +121,7 @@
           </div>
         </div>
 
-        <!-- Advanced Validation Section: number min/max -->
+        <!-- Advanced Number Validation Rules Block (Min Value, Max Value) -->
         <div *ngIf="field.get('type')?.value === 'number'" style="background: #eef5ff; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #d0e2ff;">
           <strong style="font-size: 12px; color: #0056b3; display: block; margin-bottom: 6px;">Number Validation Bounds:</strong>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -127,6 +136,7 @@
           </div>
         </div>
 
+        <!-- Required Field Checkbox Option -->
         <div>
           <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
             <input type="checkbox" formControlName="required"> Is this field required?
@@ -136,17 +146,17 @@
       </div>
     </div>
 
-    <!-- Add Field Button -->
+    <!-- Action Button: Add Dynamic Field -->
     <button type="button" (click)="addField()" style="background: #28a745; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; margin-bottom: 20px; font-size: 14px; font-weight: bold;">
       + Add Another Field
     </button>
 
-    <!-- Error Banner for Empty Validation -->
+    <!-- Error/Validation Banner Display -->
     <div *ngIf="message" style="color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 13px;">
       {{ message }}
     </div>
 
-    <!-- Submit Button -->
+    <!-- Submit Form Schema Button -->
     <div>
       <button type="submit" [disabled]="isSubmitting" style="background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 15px; font-weight: bold;">
         {{ isSubmitting ? 'Saving Configuration...' : 'Save Form to Database' }}

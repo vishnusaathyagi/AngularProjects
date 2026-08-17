@@ -118,8 +118,8 @@ export class FormBuilderComponent implements OnInit {
   }
 
   // Validates the designer form and sends structure to Node backend
+  // Validates the designer form and sends structure to Node backend
   onSaveForm(): void {
-    // Check if form is invalid
     if (this.builderForm.invalid) {
       this.builderForm.markAllAsTouched();
       this.message = 'Please fill in all required fields (Form Title, Field Name, and Field Label) before saving.';
@@ -130,7 +130,6 @@ export class FormBuilderComponent implements OnInit {
     this.message = '';
     const rawValue = this.builderForm.value;
 
-    // Clean payload and assign validation properties
     const formattedFields = rawValue.fields.map((f: any) => {
       const fieldConfig: any = {
         name: f.name,
@@ -144,7 +143,8 @@ export class FormBuilderComponent implements OnInit {
         fieldConfig.options = f.optionsInput.split(',').map((opt: string) => opt.trim());
       }
 
-      if (['text', 'email', 'tel'].includes(f.type)) {
+      // Include 'password' alongside text, email, and tel
+      if (['text', 'password', 'email', 'tel'].includes(f.type)) {
         if (f.minLength !== null && f.minLength !== '') fieldConfig.minLength = Number(f.minLength);
         if (f.maxLength !== null && f.maxLength !== '') fieldConfig.maxLength = Number(f.maxLength);
         if (f.pattern) fieldConfig.pattern = f.pattern;
