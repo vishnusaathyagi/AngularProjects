@@ -88,6 +88,7 @@ export class FormSubmissionsComponent implements OnInit {
             }
           });
           this.tableHeaders = Array.from(keysSet);
+          console.log('1111 : ', this.tableHeaders);
         }
         this.isLoading = false;
       },
@@ -111,9 +112,14 @@ export class FormSubmissionsComponent implements OnInit {
       // Check ID match
       if (String(row.id).includes(term)) return true;
 
-      // Check submitted date match
+      // Check submitted date match 
       const dateStr = new Date(row.submitted_at).toLocaleString().toLowerCase();
+      //eg) dateStr: 17/8/2026, 5:43:49 pm
+
       if (dateStr.includes(term)) return true;
+
+      // console.log('row.submission_data:', row.submission_data);
+      // eg) {password: 'asfsafasdf'}
 
       // Check dynamic submission fields
       if (row.submission_data && typeof row.submission_data === 'object') {

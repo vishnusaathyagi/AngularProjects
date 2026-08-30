@@ -1,5 +1,4 @@
 // 1. ALWAYS load environment variables first!
-// The dotenv library reads your '.env' file and injects those values into 'process.env'.
 require('dotenv').config();
 
 const express = require('express');
@@ -27,7 +26,7 @@ const corsOptions = {
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-role'], // <-- Added 'x-user-role' here
   credentials: true
 };
 

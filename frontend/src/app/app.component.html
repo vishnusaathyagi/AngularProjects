@@ -1,1 +1,37 @@
+<!-- Interactive Role Switcher Header Shell -->
+<div style="background: #212529; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-family: Arial, sans-serif;">
+  <div style="font-weight: bold; font-size: 16px;">
+    ⚡ Dynamic Form Engine <span style="font-size: 12px; color: #17a2b8;">(RBAC Vault Active)</span>
+  </div>
+  
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <span style="font-size: 13px; color: #ccc;">Active Session Role:</span>
+    <select [value]="currentRole" (change)="onRoleChange($event)" style="padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; background: #fff; color: #333; cursor: pointer;">
+      <option value="Admin">Admin (Full Access)</option>
+      <option value="Manager">Manager (Create/View)</option>
+      <option value="User">User (Submit Only)</option>
+    </select>
+  </div>
+</div>
+
+<!-- Dynamic Notification Toast Banner -->
+<div *ngIf="notificationMessage" 
+     [style.background-color]="notificationType === 'success' ? '#d4edda' : (notificationType === 'warning' ? '#fff3cd' : '#cce5ff')"
+     [style.color]="notificationType === 'success' ? '#155724' : (notificationType === 'warning' ? '#856404' : '#004085')"
+     [style.border-color]="notificationType === 'success' ? '#c3e6cb' : (notificationType === 'warning' ? '#ffeba2' : '#b8daff')"
+     style="padding: 12px 20px; border-bottom: 1px solid; display: flex; justify-content: space-between; align-items: center; font-family: Arial, sans-serif; font-size: 14px; transition: all 0.3s ease-in-out;">
+  
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-weight: bold;">
+      {{ notificationType === 'success' ? '✅ Success:' : (notificationType === 'warning' ? '⚠️ Permission Changed:' : 'ℹ️ Role Updated:') }}
+    </span>
+    <span>{{ notificationMessage }}</span>
+  </div>
+
+  <button (click)="dismissNotification()" style="background: transparent; border: none; font-weight: bold; font-size: 16px; cursor: pointer; color: inherit;">
+    ✕
+  </button>
+</div>
+
+<!-- Main Router Outlet -->
 <router-outlet></router-outlet>

@@ -23,8 +23,7 @@
     <div style="margin-bottom: 15px;">
       <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #222;">Form Title *</label>
       <input type="text" formControlName="form_name" placeholder="e.g. Job Application Form" 
-             [style.border-color]="builderForm.get('form_name')?.invalid && builderForm.get('form_name')?.touched ? '#dc3545' : '#ccc'"
-             style="width: 100%; padding: 8px; box-sizing: border-box; border-style: solid; border-width: 1px; border-radius: 4px; font-size: 14px;">
+             [style.border-color]="builderForm.get('form_name')?.invalid && builderForm.get('form_name')?.touched ? '#dc3545' : '#ccc'" style="width: 100%; padding: 8px; box-sizing: border-box; border-style: solid; border-width: 1px; border-radius: 4px; font-size: 14px;">
       <!-- Validation Message for Form Title -->
       <div *ngIf="builderForm.get('form_name')?.invalid && builderForm.get('form_name')?.touched" style="color: #dc3545; font-size: 12px; margin-top: 4px;">
         Form title is required.
@@ -43,8 +42,7 @@
     <!-- Dynamic Fields Array Container -->
     <div formArrayName="fields">
       <!-- Iterate through each field FormGroup in the FormArray -->
-      <div *ngFor="let field of fields.controls; let i = index" [formGroupName]="i" 
-           style="background: #f8f9fa; padding: 15px; border: 1px solid #e9ecef; border-radius: 6px; margin-bottom: 15px;">
+      <div *ngFor="let field of fields.controls; let i = index" [formGroupName]="i" style="background: #f8f9fa; padding: 15px; border: 1px solid #e9ecef; border-radius: 6px; margin-bottom: 15px;">
         
         <!-- Field Card Header & Remove Button -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">

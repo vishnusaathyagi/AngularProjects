@@ -1,10 +1,4 @@
-<!-- Developer note: This template renders a dynamic form selected from the DB. -->
-<!-- Layers:
-  - Header toolbar: select form and top-level actions
-  - Loading/Error: shows current load status and errors
-  - Rendered Dynamic Form UI: the actual form and fields loop
-  - Submit: submit button
-  These comments are for developer clarity and do not affect runtime. -->
+<!-- Developer note: Dynamic form component template integrated with RBAC UI visibility controls. -->
 <div class="header-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
   
   <!-- Form Selector Dropdown displaying live response counts -->
@@ -17,34 +11,50 @@
     </select>
   </div>
 
-  <!-- Main Action Buttons -->
+  <!-- Main Action Buttons with Role-Based Access Control (RBAC) -->
   <div style="display: flex; gap: 8px; align-items: center;">
-    <button (click)="navigateToBuilder()" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+    
+    <!-- Admin & Manager: Create Forms -->
+    <button 
+      *ngIf="authService.hasRole(['Admin', 'Manager'])" 
+      (click)="navigateToBuilder()" 
+      style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
       + Build New Form
     </button>
 
-    <button (click)="navigateToSubmissions()" style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+    <!-- Admin & Manager: View Submissions -->
+    <button 
+      *ngIf="authService.hasRole(['Admin', 'Manager'])" 
+      (click)="navigateToSubmissions()" 
+      style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
       View Submissions
     </button>
 
-    <button (click)="editCurrentForm()" style="background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+    <!-- Admin Only: Edit Form Schema -->
+    <button 
+      *ngIf="authService.hasRole(['Admin'])" 
+      (click)="editCurrentForm()" 
+      style="background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
       ✏️ Edit Form
     </button>
     
-    <button (click)="deleteCurrentForm()" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+    <!-- Admin Only: Delete Form Schema -->
+    <button 
+      *ngIf="authService.hasRole(['Admin'])" 
+      (click)="deleteCurrentForm()" 
+      style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
       🗑️ Delete Form
     </button>
+
   </div>
 
 </div>
 
-  <!-- Header toolbar: form selector and quick actions -->
-
-  <!-- Loading & Error States -->
+<!-- Loading & Error States -->
 <div *ngIf="isLoading"><p>Loading form design...</p></div>
 <div *ngIf="errorMessage" style="color: red; font-weight: bold;">{{ errorMessage }}</div>
 
-  <!-- Rendered Dynamic Form UI: main form area shown when loaded -->
+<!-- Rendered Dynamic Form UI: main form area shown when loaded -->
 <div *ngIf="!isLoading && !errorMessage" style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 25px; border-radius: 8px; background: #fff;">
   <h2>{{ formTitle }}</h2>
   <p style="color: #666;">{{ formDescription }}</p>
@@ -77,7 +87,7 @@
         <option *ngFor="let opt of field.options" [value]="opt">{{ opt }}</option>
       </select>
 
-      <!-- Advanced Dynamic Field Validation Error Messages: per-field validation hints for developers -->
+      <!-- Dynamic Field Validation Error Messages -->
       <div *ngIf="dynamicForm.get(field.name)?.invalid && dynamicForm.get(field.name)?.touched" style="color: red; font-size: 12px; margin-top: 4px;">
         <div *ngIf="dynamicForm.get(field.name)?.errors?.['required']">
           {{ field.label }} is required.
@@ -104,7 +114,7 @@
 
     </div>
 
-    <!-- Submit button: triggers `onSubmit()` in component -->
+    <!-- Submit button: Accessible by all roles -->
     <button type="submit" style="width: 100%; background: #007bff; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 15px;">
       Submit Form
     </button>

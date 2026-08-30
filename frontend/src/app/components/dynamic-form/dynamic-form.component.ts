@@ -1,11 +1,11 @@
-/* Developer note: Dynamic form renderer component.
-  Purpose: fetch form schema from backend and build a reactive form at runtime.
-  Layers: form list loading, schema parsing, reactive control construction, submit handler.
-  Most methods already contain inline comments; this header is for quick orientation. */
+/* Developer note: Dynamic form renderer component integrated with RBAC service.
+  Purpose: fetch form schema from backend, build a reactive form at runtime, and enforce role-based action access.
+  Layers: form list loading, schema parsing, reactive control construction, submit handler, RBAC access checks. */
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { FormApiService } from '../../services/form-api.service';
+import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -32,10 +32,12 @@ export class DynamicFormComponent implements OnInit {
 
   constructor(
     private formApiService: FormApiService,
+    public authService: AuthService, // PUBLIC access required for template *ngIf="authService.hasRole(...)"
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Fetches list of forms from backend including total submission counts
     this.loadAllForms();
   }
 
@@ -87,9 +89,7 @@ export class DynamicFormComponent implements OnInit {
           this.formDescription = response.data.description;
           
           this.formFields = typeof response.data.fields === 'string' 
-            ? JSON.parse(response.data.fields) 
-            : response.data.fields;
-
+            ? JSON.parse(response.data.fields) : response.data.fields;
           this.buildFormControls(this.formFields);
         }
         this.isLoading = false;
@@ -148,8 +148,12 @@ export class DynamicFormComponent implements OnInit {
     this.dynamicForm = new FormGroup(formGroupConfig);
   }
 
-  // Navigates user to Form Builder screen
+  // Navigates user to Form Builder screen (Admin & Manager allowed)
   navigateToBuilder(): void {
+    if (!this.authService.hasRole(['Admin', 'Manager'])) {
+      alert('Access Denied: Only Admins and Managers can build new forms.');
+      return;
+    }
     this.router.navigate(['/builder']);
   }
 
@@ -180,13 +184,22 @@ export class DynamicFormComponent implements OnInit {
     }
   }
 
-  // Navigates user to Submissions Dashboard
+  // Navigates user to Submissions Dashboard (Admin & Manager allowed)
   navigateToSubmissions(): void {
+    if (!this.authService.hasRole(['Admin', 'Manager'])) {
+      alert('Access Denied: Only Admins and Managers can view submissions.');
+      return;
+    }
     this.router.navigate(['/submissions']);
   }
 
-  // Opens selected form in builder mode for layout modification
+  // Opens selected form in builder mode for layout modification (Admin ONLY)
   editCurrentForm(): void {
+    if (!this.authService.hasRole(['Admin'])) {
+      alert('Access Denied: Only Admins are permitted to edit form structures.');
+      return;
+    }
+
     if (this.selectedFormId && this.selectedFormName) {
       this.router.navigate(['/builder'], { 
         queryParams: { editId: this.selectedFormId, formName: this.selectedFormName } 
@@ -194,8 +207,13 @@ export class DynamicFormComponent implements OnInit {
     }
   }
 
-  // Deletes currently active form along with all related responses
+  // Deletes currently active form along with all related responses (Admin ONLY)
   deleteCurrentForm(): void {
+    if (!this.authService.hasRole(['Admin'])) {
+      alert('Access Denied: Only Admins are permitted to delete forms.');
+      return;
+    }
+
     if (!this.selectedFormId) return;
 
     const confirmDelete = confirm(`Are you sure you want to delete "${this.selectedFormName}"? This will also remove all its submissions.`);

@@ -4,6 +4,25 @@
 
 ---
 
+## 🔐 NEW: Role-Based Access Control (RBAC)
+
+This project now includes **authentication and authorization**:
+
+- **Admin Role**: Full control - create, edit, delete any form; manage users
+- **Form Creator Role**: Can create and edit own forms; view own submissions  
+- **User Role**: Can only fill and submit forms
+
+**Login with demo accounts:**
+```
+Admin:    username: admin, password: password123 (role: admin)
+Creator:  username: john_creator, password: password123 (role: form_creator)
+User:     username: bob_user, password: password123 (role: user)
+```
+
+📘 **See:** [RBAC_IMPLEMENTATION.md](RBAC_IMPLEMENTATION.md) for complete authentication/authorization guide
+
+---
+
 ### 📌 Quick Test Instructions
 You can instantly test the live application without setting up an account:
 1. Open the **Live Demo link** above.
@@ -52,14 +71,24 @@ The application provides a visual UI where users can build form layouts, attach 
 
 ## ✨ Key Features & Architecture Details
 
+### Security & Authentication
+* **JWT-Based Authentication** - Secure token-based login system
+* **Role-Based Access Control (RBAC)** - Three user roles with different permissions
+* **Password Security** - Bcrypt hashing for password storage
+* **Protected Routes** - Frontend guards + backend middleware for authorization
+* **HTTP Interceptor** - Automatically attach JWT token to all API requests
+
 ### Frontend Architecture
 * **Dynamic Reactive Form Engine:** Generates `FormGroup` and `FormControl` trees programmatically at runtime based on the JSON schema fetched from the backend.
 * **Custom Regex & Validation Parsing:** Evaluates backend-configured constraints (min/max lengths, numerical bounds, required flags, custom Regex patterns) and maps them directly to Angular `Validators`.
 * **Dynamic Form Builder UI:** Allows users to visually add, reorder, or remove fields and set custom validation rules without touching code.
 * **Spreadsheet Export:** Converts submitted JSON form records into formatted `.xlsx` files client-side using `exceljs`.
+* **Role-Based UI:** Components conditionally show/hide based on user role (admin, creator, user)
 
 ### Backend Architecture
 * **Modular REST API:** Clean separation of concerns with dedicated routes (`/api/forms`) and controllers.
+* **JWT Verification Middleware:** Validates authentication token on protected endpoints
+* **Role Authorization Middleware:** Checks user permissions before allowing actions
 * **JSON Schema Storage in MySQL:** Keeps the MySQL table structure static while storing dynamic field definitions as flexible JSON strings, offering the flexibility of NoSQL inside a relational database.
 * **CORS Protection:** Configured with origin filtering to secure backend endpoints against unauthorized cross-domain calls.
 

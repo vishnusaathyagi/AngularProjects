@@ -1,11 +1,11 @@
-/* Developer note: Form Builder component.
+/* Developer note: Form Builder component integrated with RBAC service.
   Purpose: visually compose form layouts and validation rules, then save to backend.
-  Layers: reactive builder form setup, dynamic FormArray of fields, persistence calls.
-  Inline comments inside the file explain many helper methods; this header helps new readers. */
+  Layers: reactive builder form setup, dynamic FormArray of fields, persistence calls, RBAC authorization checks. */
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormApiService } from '../../services/form-api.service';
+import { AuthService } from '../../services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -25,12 +25,20 @@ export class FormBuilderComponent implements OnInit {
   constructor(
     private fb: FormBuilder, 
     private formApiService: FormApiService,
+    public authService: AuthService, // PUBLIC access required for template *ngIf="authService.hasRole(...)"
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
-  // Initializes the screen structure and checks if we are editing an existing form
+  // Initializes the screen structure and checks user permissions & query params
   ngOnInit(): void {
+    // RBAC check: restrict builder access to Admin and Manager roles
+    if (!this.authService.hasRole(['Admin', 'Manager'])) {
+      alert('Access Denied: Only Admins and Managers can access the Form Builder.');
+      this.router.navigate(['/']);
+      return;
+    }
+
     this.builderForm = this.fb.group({
       form_name: ['', Validators.required],
       description: [''],
@@ -41,6 +49,13 @@ export class FormBuilderComponent implements OnInit {
     // Read URL query parameters to determine if we are editing an existing form
     this.route.queryParams.subscribe(params => {
       if (params['editId'] && params['formName']) {
+        // Editing layout is reserved exclusively for Admin role
+        if (!this.authService.hasRole(['Admin'])) {
+          alert('Access Denied: Only Admins are permitted to edit existing form layouts.');
+          this.router.navigate(['/']);
+          return;
+        }
+
         this.editingFormId = Number(params['editId']);
         this.loadFormForEditing(params['formName']);
       } else {
@@ -118,8 +133,18 @@ export class FormBuilderComponent implements OnInit {
   }
 
   // Validates the designer form and sends structure to Node backend
-  // Validates the designer form and sends structure to Node backend
   onSaveForm(): void {
+    // RBAC validation checks before persistence logic
+    if (this.editingFormId && !this.authService.hasRole(['Admin'])) {
+      alert('Access Denied: Only Admins can modify existing form layouts.');
+      return;
+    }
+
+    if (!this.authService.hasRole(['Admin', 'Manager'])) {
+      alert('Access Denied: Only Admins and Managers can save form designs.');
+      return;
+    }
+
     if (this.builderForm.invalid) {
       this.builderForm.markAllAsTouched();
       this.message = 'Please fill in all required fields (Form Title, Field Name, and Field Label) before saving.';
